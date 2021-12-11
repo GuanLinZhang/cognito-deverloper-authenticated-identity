@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
-    private final String IDENTITY_POOL_ID = "us-east-1:3361d184-efc8-49e7-8887-88931f8c04ae";
+    private final String IDENTITY_POOL_ID = "us-east-1:46bcd24c-a9ff-42b7-bac8-cecd746e6673";
     private final String IDENTITY_PROVIDE_NAME = "login.com.guanlinz.app";
+    private final Long TOKEN_DURATION = 24 * 60 * 60l;
 
     public AuthBean auth(String userId) {
-
         var identityClient = AmazonCognitoIdentityClientBuilder.standard()
                 .withRegion(Regions.US_EAST_1)
                 .withCredentials(new ProfileCredentialsProvider("default")).build();
@@ -31,17 +31,19 @@ public class AuthService {
         request.setLogins(logins);
 
         // optionally set token duration (in seconds)
-        request.setTokenDuration(24 * 60 * 60l);
+        request.setTokenDuration(TOKEN_DURATION);
         var response = identityClient.getOpenIdTokenForDeveloperIdentity(request);
 
         // obtain identity id and token to return to your client
         String identityId = response.getIdentityId();
         String token = response.getToken();
+        var metadata = response.getSdkResponseMetadata();
+        System.out.println(metadata);
 
         System.out.println("identityId: " + identityId);
         System.out.println("token: " + token);
 
-        return new AuthBean(identityId, token);
+        return new AuthBean(identityId, token, IDENTITY_POOL_ID, TOKEN_DURATION, IDENTITY_PROVIDE_NAME);
     }
 
 }
